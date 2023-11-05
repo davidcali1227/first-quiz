@@ -1,0 +1,580 @@
+diff --git a/part1/question1.py b/part1/question1.py
+index 5c99fdb..d2ef3c0 100644
+--- a/part1/question1.py
++++ b/part1/question1.py
+@@ -20,16 +20,23 @@ def get_city_temperature(city):
+       return 17
+    if city == "San Francisco":
+       return 16
++   if city == "New York":
++      return 14
++   else:
++      return "unknown"
+ 
+ def get_city_weather(city):
+ 
+   sky_condition = None
+ 
+   if city == "Sao Paulo":
+-     sky_condition = "cloudy"
++   sky_condition = "cloudy"
+   elif city == "New York":
+      sky_condition = "rainy"
++  elif city == "Quito":
++      sky_condition = "sunny"
++  else:
++   return "City not found"
+ 
+   temperature = get_city_temperature(city)
+-
+-  return str(temperature) + " degrees and " + sky_condition
+\ No newline at end of file
++  return str(temperature) + " degrees and " + sky_condition
+diff --git a/part1/question2.py b/part1/question2.py
+index 34a9b01..f1c8060 100644
+--- a/part1/question2.py
++++ b/part1/question2.py
+@@ -16,6 +16,8 @@
+ # `question2_test.py.`
+ 
+ swapper = None
+-
+ def run_swapper(list_of_tuples):
+-  return list(map(swapper, list_of_tuples))
+\ No newline at end of file
++  return list(map(swapper, list_of_tuples))
++
++def swapper(tuple):
++  return (tuple[1],tuple[0])
+\ No newline at end of file
+diff --git a/part1/question3.py b/part1/question3.py
+index 04fab99..048d442 100644
+--- a/part1/question3.py
++++ b/part1/question3.py
+@@ -27,7 +27,7 @@
+ 
+ # This function should return an oven instance!
+ def make_oven():
+-  None
++  return Oven()
+ 
+ def alchemy_combine(oven, ingredients, temperature):
+   
+@@ -41,4 +41,29 @@ def alchemy_combine(oven, ingredients, temperature):
+   else:
+     oven.wait()
+ 
+-  return oven.get_output()
+\ No newline at end of file
++  return oven.get_output()
++
++class Oven:
++    def __init__(self):
++        self.ingredients = []
++        self.temperature = "warm"
++
++    def add(self, item):
++        self.ingredients.append(item)
++
++    def freeze(self):
++        self.temperature = "cold"
++
++    def boil(self):
++        self.temperature = "hot"
++
++    def wait(self):
++        self.temperature = "warm"
++
++    def get_output(self):
++        if self.temperature == "cold" and "water" in self.ingredients and "air" in self.ingredients:
++            return "snow"
++        elif self.temperature == "hot" and "cheese" in self.ingredients and "dough" in self.ingredients and "tomato" in self.ingredients:
++            return "pizza"
++        elif self.temperature == "hot" and "lead" in self.ingredients and "mercury" in self.ingredients:
++            return "gold"
+\ No newline at end of file
+diff --git a/part1/question3_test.py b/part1/question3_test.py
+index 6cb6c89..0dee4e2 100644
+--- a/part1/question3_test.py
++++ b/part1/question3_test.py
+@@ -1,3 +1,5 @@
++from question3 import make_oven, alchemy_combine
++
+ def test_alchemy_combine():
+ 
+   assert alchemy_combine(
+diff --git a/part1/question4.py b/part1/question4.py
+index 1e1b2bf..07515da 100644
+--- a/part1/question4.py
++++ b/part1/question4.py
+@@ -22,10 +22,11 @@ import pets_db
+ # Write SQL to select the pets that are owned by nobody.
+ # The output should be a list of tuples in the format: (<pet name>, <species>, <age>)
+ 
+-sql_pets_owned_by_nobody = """
+-
+-Your SQL here.
+-
++sql_pets_owned_by_nobody =  """
++SELECT animal.name, animal.species, animal.age
++FROM animals animal
++LEFT JOIN people_animals people_animal ON animal.animal_id = people_animal.pet_id
++WHERE people_animal.owner_id IS NULL;
+ """
+ 
+ # Part 4.B:
+@@ -33,16 +34,26 @@ Your SQL here.
+ # The output should be an integer.
+ 
+ sql_pets_older_than_owner = """
+-
+-Your SQL here.
+-
++SELECT COUNT(*) AS count
++FROM people_animals people_animal
++JOIN animals animal ON people_animal.pet_id = animal.animal_id
++JOIN people person ON people_animal.owner_id = person.person_id
++WHERE animal.age > person.age;
+ """
+ 
+ # Part 4.C: BONUS CHALLENGE! 
+ # Write SQL to select the pets that are owned by Bessie and nobody else.
+ # The output should be a list of tuples in the format: (<person name>, <pet name>, <species>)
+-sql_only_owned_by_bessie = """ 
+-
+-Your SQL here.
+-
++sql_only_owned_by_bessie = """
++SELECT p.name AS person_name, a.name AS pet_name, a.species
++FROM animals a
++JOIN people_animals pa ON a.animal_id = pa.pet_id
++JOIN people p ON pa.owner_id = p.person_id
++WHERE p.name = 'bessie'
++AND NOT EXISTS (
++    SELECT 1
++    FROM people_animals pa2
++    WHERE pa2.pet_id = pa.pet_id
++    AND pa2.owner_id <> p.person_id
++);
+ """
+\ No newline at end of file
+diff --git a/part1/question5.py b/part1/question5.py
+index f76654f..570b6a8 100644
+--- a/part1/question5.py
++++ b/part1/question5.py
+@@ -19,8 +19,11 @@
+ # vegetarian integer
+ 
+ sql_create_favorite_foods = """
+-
+-Your SQL here.
++ CREATE TABLE favorite_foods (
++      food_id INTEGER PRIMARY KEY,
++      name TEXT NOT NULL,
++      vegetarian INTEGER NOT NULL
++    );
+ 
+ """
+ 
+@@ -30,7 +33,11 @@ Your SQL here.
+ 
+ sql_alter_tables_with_favorite_food = """
+ 
+-Your SQL here.
++ALTER TABLE animals
++ADD COLUMN favorite_food_id INTEGER;
++
++ALTER TABLE people
++ADD COLUMN favorite_food_id INTEGER;
+ 
+ """
+ 
+@@ -40,6 +47,8 @@ Your SQL here.
+ 
+ sql_select_all_vegetarian_pets = """
+ 
+-Your SQL here.
+-
++SELECT animals.name, favorite_foods.name
++FROM animals
++INNER JOIN favorite_foods ON favorite_foods.food_id = animals.favorite_food_id
++WHERE favorite_foods.vegetarian = 1
+ """
+\ No newline at end of file
+diff --git a/part1/quiz_pets b/part1/quiz_pets
+new file mode 100644
+index 0000000..4980842
+Binary files /dev/null and b/part1/quiz_pets differ
+diff --git a/part2/.classpath b/part2/.classpath
+new file mode 100644
+index 0000000..f7e4a1d
+--- /dev/null
++++ b/part2/.classpath
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<classpath>
++	<classpathentry kind="src" output="target/classes" path="src/main/java">
++		<attributes>
++			<attribute name="optional" value="true"/>
++			<attribute name="maven.pomderived" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
++		<attributes>
++			<attribute name="maven.pomderived" value="true"/>
++			<attribute name="optional" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
++		<attributes>
++			<attribute name="optional" value="true"/>
++			<attribute name="maven.pomderived" value="true"/>
++			<attribute name="test" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources">
++		<attributes>
++			<attribute name="maven.pomderived" value="true"/>
++			<attribute name="test" value="true"/>
++			<attribute name="optional" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
++		<attributes>
++			<attribute name="maven.pomderived" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
++		<attributes>
++			<attribute name="maven.pomderived" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="output" path="target/classes"/>
++</classpath>
+diff --git a/part2/.project b/part2/.project
+new file mode 100644
+index 0000000..ecddd0f
+--- /dev/null
++++ b/part2/.project
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>part2</name>
++	<comment></comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.jdt.core.javabuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.m2e.core.maven2Builder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.jdt.core.javanature</nature>
++		<nature>org.eclipse.m2e.core.maven2Nature</nature>
++	</natures>
++</projectDescription>
+diff --git a/part2/.settings/org.eclipse.core.resources.prefs b/part2/.settings/org.eclipse.core.resources.prefs
+new file mode 100644
+index 0000000..f9fe345
+--- /dev/null
++++ b/part2/.settings/org.eclipse.core.resources.prefs
+@@ -0,0 +1,4 @@
++eclipse.preferences.version=1
++encoding//src/main/java=UTF-8
++encoding//src/test/java=UTF-8
++encoding/<project>=UTF-8
+diff --git a/part2/.settings/org.eclipse.jdt.core.prefs b/part2/.settings/org.eclipse.jdt.core.prefs
+new file mode 100644
+index 0000000..2f5cc74
+--- /dev/null
++++ b/part2/.settings/org.eclipse.jdt.core.prefs
+@@ -0,0 +1,8 @@
++eclipse.preferences.version=1
++org.eclipse.jdt.core.compiler.codegen.targetPlatform=1.8
++org.eclipse.jdt.core.compiler.compliance=1.8
++org.eclipse.jdt.core.compiler.problem.enablePreviewFeatures=disabled
++org.eclipse.jdt.core.compiler.problem.forbiddenReference=warning
++org.eclipse.jdt.core.compiler.problem.reportPreviewFeatures=ignore
++org.eclipse.jdt.core.compiler.release=disabled
++org.eclipse.jdt.core.compiler.source=1.8
+diff --git a/part2/bin/.project b/part2/bin/.project
+new file mode 100644
+index 0000000..ecddd0f
+--- /dev/null
++++ b/part2/bin/.project
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>part2</name>
++	<comment></comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.jdt.core.javabuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.m2e.core.maven2Builder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.jdt.core.javanature</nature>
++		<nature>org.eclipse.m2e.core.maven2Nature</nature>
++	</natures>
++</projectDescription>
+diff --git a/part2/bin/.settings/org.eclipse.core.resources.prefs b/part2/bin/.settings/org.eclipse.core.resources.prefs
+new file mode 100644
+index 0000000..99f26c0
+--- /dev/null
++++ b/part2/bin/.settings/org.eclipse.core.resources.prefs
+@@ -0,0 +1,2 @@
++eclipse.preferences.version=1
++encoding/<project>=UTF-8
+diff --git a/part2/bin/README.md b/part2/bin/README.md
+new file mode 100644
+index 0000000..5e343df
+--- /dev/null
++++ b/part2/bin/README.md
+@@ -0,0 +1,27 @@
++```
++__________                __    ________  
++\______   \_____ ________/  |_  \_____  \ 
++ |     ___/\__  \\_  __ \   __\  /  ____/ 
++ |    |     / __ \|  | \/|  |   /       \ 
++ |____|    (____  /__|   |__|   \_______ \
++                \/                      \/
++```
++
++Part 2 is a single question that must be implemented in Java. 
++
++The problem provides an interface for a VendingMachine. Your job is to create a class that implements
++the interface and behaves the way that the test suite in `Question6Test.java` expects.
++
++# Getting Started
++
++You will need to have Maven installed. It is the compile and test system for this problem. 
++
++If you are on MacOS and have homebrew installed, you can install Maven with `brew install maven`. Otherwise, it 
++is available from the website: https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html
++
++To run the test suite, from this directory, you can do:
++```
++mvn test
++```
++
++The main code for the question is under `src/main/` and the test suite is under `src/test`.
+\ No newline at end of file
+diff --git a/part2/bin/pom.xml b/part2/bin/pom.xml
+new file mode 100644
+index 0000000..3117aed
+--- /dev/null
++++ b/part2/bin/pom.xml
+@@ -0,0 +1,75 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++  <modelVersion>4.0.0</modelVersion>
++
++  <groupId>org.velezreyes.quiz</groupId>
++  <artifactId>vz-first-quiz</artifactId>
++  <version>1.0-SNAPSHOT</version>
++
++  <name>vz-first-quiz</name>
++  <!-- FIXME change it to the project's website -->
++  <url>http://www.example.com</url>
++
++  <properties>
++    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
++    <maven.compiler.source>1.8</maven.compiler.source>
++    <maven.compiler.target>1.8</maven.compiler.target>
++  </properties>
++
++  <dependencies>
++    <dependency>
++      <groupId>org.junit.jupiter</groupId>
++      <artifactId>junit-jupiter</artifactId>
++      <version>5.10.0</version>
++      <scope>test</scope>
++    </dependency>
++  </dependencies>
++
++  <build>
++    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
++      <plugins>
++        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
++        <plugin>
++          <artifactId>maven-clean-plugin</artifactId>
++          <version>3.1.0</version>
++        </plugin>
++        <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
++        <plugin>
++          <artifactId>maven-resources-plugin</artifactId>
++          <version>3.0.2</version>
++        </plugin>
++        <plugin>
++          <artifactId>maven-compiler-plugin</artifactId>
++          <version>3.8.0</version>
++        </plugin>
++        <plugin>
++          <artifactId>maven-surefire-plugin</artifactId>
++          <version>2.22.1</version>
++        </plugin>
++        <plugin>
++          <artifactId>maven-jar-plugin</artifactId>
++          <version>3.0.2</version>
++        </plugin>
++        <plugin>
++          <artifactId>maven-install-plugin</artifactId>
++          <version>2.5.2</version>
++        </plugin>
++        <plugin>
++          <artifactId>maven-deploy-plugin</artifactId>
++          <version>2.8.2</version>
++        </plugin>
++        <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
++        <plugin>
++          <artifactId>maven-site-plugin</artifactId>
++          <version>3.7.1</version>
++        </plugin>
++        <plugin>
++          <artifactId>maven-project-info-reports-plugin</artifactId>
++          <version>3.0.0</version>
++        </plugin>
++      </plugins>
++    </pluginManagement>
++  </build>
++</project>
+diff --git a/part2/src/main/java/org/velezreyes/quiz/question6/DrinkImpl.java b/part2/src/main/java/org/velezreyes/quiz/question6/DrinkImpl.java
+new file mode 100644
+index 0000000..3dc5f58
+--- /dev/null
++++ b/part2/src/main/java/org/velezreyes/quiz/question6/DrinkImpl.java
+@@ -0,0 +1,27 @@
++package org.velezreyes.quiz.question6;
++
++public class DrinkImpl implements Drink {
++    private double price;
++    private String name;
++    public boolean isFizzy;
++
++    public DrinkImpl(String name, double price, boolean isFizzy){
++        this.name = name;
++        this.price = price;
++        this.isFizzy = isFizzy;
++    }
++
++    public double getPrice(){
++        return this.price;
++    }
++    @Override
++    public String getName() {
++        return  this.name;
++    }
++
++    @Override
++    public boolean isFizzy() {
++        return this.isFizzy;
++    }
++}
++
+diff --git a/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java b/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java
+index 85742c4..89a50ed 100644
+--- a/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java
++++ b/part2/src/main/java/org/velezreyes/quiz/question6/VendingMachineImpl.java
+@@ -1,9 +1,51 @@
+ package org.velezreyes.quiz.question6;
+ 
+-public class VendingMachineImpl {
++import java.util.HashMap;
++import java.util.Map;
+ 
+-  public static VendingMachine getInstance() {
+-    // Fix me!
+-    return null;
+-  }
++public class VendingMachineImpl implements VendingMachine {
++	private Map<String, Drink> drinks;
++    int countCoins;
++    
++	private static VendingMachine instance;
++	
++	public VendingMachineImpl() {
++		this.countCoins = 0;
++        Drink scottCola = new DrinkImpl("ScottCola", 75, true);
++        Drink karenTea = new DrinkImpl("KarenTea", 100, false);
++
++        this.drinks = new HashMap<>();
++        this.drinks.put("ScottCola", scottCola);
++        this.drinks.put("KarenTea", karenTea);
++	}
++	
++	public static VendingMachine getInstance() {
++	  if (instance == null) {
++	      instance = new VendingMachineImpl();
++	    }
++	    return instance;
++	  }
++
++	@Override
++	public void insertQuarter() {
++		 this.countCoins +=25;
++	}
++	
++
++
++	@Override
++	public Drink pressButton(String name) throws NotEnoughMoneyException, UnknownDrinkException {
++		DrinkImpl drink = (DrinkImpl) drinks.get(name);
++	    if (drink == null) {
++	        throw new UnknownDrinkException();
++	    }
++	    if (this.countCoins < drink.getPrice()) {
++	        throw new NotEnoughMoneyException();
++	    }
++	
++	    this.countCoins = 0;
++	
++	    return drink;
++	}
++	  
+ }
+diff --git a/part3/security_question.md b/part3/security_question.md
+new file mode 100644
+index 0000000..00c33cb
+--- /dev/null
++++ b/part3/security_question.md
+@@ -0,0 +1,21 @@
++Lo que yo podría considerar y basandome en la experiencia de guías estos son los puntos que rescatamos para una infraestructura de paneles solares siguiendo el OWASP Top 10:
++
++1. Autenticación y Control de Acceso: Implementa autenticación segura y control de acceso adecuado, incluyendo hashing y salting de contraseñas y roles de usuario.
++
++2. Seguridad de Datos: Encripta datos confidenciales y restringe el acceso solo a personal autorizado.
++
++3. Prevención de Inyección de SQL: Utiliza consultas seguras y ORM para evitar inyecciones de SQL.
++
++4. Prevención de XSS: Escapa y valida datos de entrada para evitar ataques XSS, considera el uso de Content Security Policy.
++
++5. Seguridad de APIs: Protege las APIs con autenticación sólida y autorización adecuada, y considera el uso de cortafuegos de aplicaciones web.
++
++6. Gestión de Sesiones: Asegura una gestión segura de sesiones para evitar la suplantación de sesiones.
++
++7. Seguridad en Contenedores y Orquestación: Configura contenedores y Kubernetes de manera segura, aplicando políticas y actualizando imágenes de contenedores.
++
++8. Auditoría y Monitorización: Implementa sistemas de auditoría y monitorización para detectar comportamientos anómalos.
++
++9. Gestión de Parches y Actualizaciones: Mantén componentes y software actualizados y aplica parches de seguridad regularmente.
++
++10. Educación y Concienciación: Educa a todo el personal sobre buenas prácticas de seguridad y cómo reportar incidentes.
+\ No newline at end of file
